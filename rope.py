@@ -50,26 +50,50 @@ def apply_rotary_emb(
 
     _, seqlen, _, _ = query.shape
     device = query.device
-    # todo
-    #
     # Please refer to slide 22 in https://phontron.com/class/anlp2024/assets/slides/anlp-05-transformers.pdf
     # and Section 3 in https://arxiv.org/abs/2104.09864.
 
+    # print("query", query, query.shape)
+
     # reshape xq and xk to match the complex representation
     query_real, query_imag = query.float().reshape(query.shape[:-1] + (-1, 2)).unbind(-1)
+
+    # print("query_real", query_real, query_real.shape)
+    # print("query_imag", query_imag, query_imag.shape)
+
     key_real, key_imag = key.float().reshape(key.shape[:-1] + (-1, 2)).unbind(-1)
     # This separates each query/key vector into its odd and even indices (assuming *one-indexing*).
     # query_real contains q_1, q_3, q_5, ... and query_imag contains q_2, q_4, q_6, ...
 
     # First, compute the trigonometric values in the second and fourth columns in
     # slide 22 (linked above).
+    theta_t = 1.0 / (
+        theta
+        ** (torch.arange(0, head_dim, 2)[: (head_dim // 2)].float() / head_dim)
+    )
+
+    seq_idx = torch.arange(
+        max_seq_len, dtype=theta_t.dtype, device=device
+    )
+
+    # Outer product of theta and position index; output tensor has
+    # a shape of [max_seq_len, dim // 2]
+    idx_theta = torch.einsum("i, j -> ij", seq_idx, theta_t).float().unsqueeze(1)
+
+    sin = torch.sin(idx_theta)[:seqlen]
+    cos = torch.cos(idx_theta)[:seqlen]
 
     # Then, combine these trigonometric values with the tensors query_real, query_imag,
-    # key_real, and key_imag.
 
-    raise NotImplementedError
+    query_out = torch.zeros_like(query)
+    query_out[..., 0::2] = query_real * cos - query_imag * sin
+    query_out[..., 1::2] = query_imag * cos + query_imag * sin
 
-    query_out = None
-    key_out = None
+    key_out = torch.zeros_like(key)
+    key_out[..., 0::2] = key_real * cos - key_imag * sin
+    key_out[..., 1::2] = key_real * cos + key_imag * sin
+
+    # print("query_out", query_out.shape, query_out)
+
     # Return the rotary position embeddings for the query and key tensors
     return query_out, key_out
