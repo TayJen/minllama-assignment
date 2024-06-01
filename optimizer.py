@@ -1,5 +1,6 @@
 from typing import Callable, Iterable, Tuple
 
+import math
 import torch
 from torch.optim import Optimizer
 
@@ -38,23 +39,47 @@ class AdamW(Optimizer):
                 if grad.is_sparse:
                     raise RuntimeError("Adam does not support sparse gradients, please consider SparseAdam instead")
 
-                raise NotImplementedError()
-
                 # State should be stored in this dictionary
                 state = self.state[p]
 
+                # State initialization
+                if len(state) == 0:
+                    state['step'] = 0
+                    state['m_t'] = torch.zeros_like(p.data)
+                    state['v_t'] = torch.zeros_like(p.data)
+
+                state['step'] += 1
+
                 # Access hyperparameters from the `group` dictionary
                 alpha = group["lr"]
+                beta1, beta2 = group["betas"]
+                eps = group["eps"]
+                lmbda = group["weight_decay"]
+                correct_bias = group["correct_bias"]
 
                 # Update first and second moments of the gradients
+                m_t, v_t = state['m_t'], state['v_t']
+                m_t1 = beta1 * m_t + (1 - beta1) * grad
+                v_t1 = beta2 * v_t + (1 - beta2) * torch.square(grad)
+
+                state['m_t'], state['v_t'] = m_t1, v_t1
 
                 # Bias correction
                 # Please note that we are using the "efficient version" given in
                 # https://arxiv.org/abs/1412.6980
+                # Decay the first and second moment running average coefficient
+                if correct_bias:
+                    bias_correction_1 = 1 - beta1 ** state['step']
+                    m_t1 = m_t1 / bias_correction_1
+
+                    bias_correction_2 = 1 - beta2 ** state['step']
+                    v_t1 = v_t1 / bias_correction_2
 
                 # Update parameters
+                new_weights = p.data - (alpha * m_t1) / (eps + torch.sqrt(v_t1))
 
                 # Add weight decay after the main gradient-based updates.
                 # Please note that the learning rate should be incorporated into this update.
+                p.data = new_weights - alpha * lmbda * p.data
 
         return loss

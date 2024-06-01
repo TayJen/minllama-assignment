@@ -1,0 +1,17 @@
+Rotary Positional Embeddings (rope):
+https://pytorch.org/torchtune/stable/_modules/torchtune/modules/position_embeddings.html
+https://phontron.com/class/anlp2024/assets/slides/anlp-05-transformers.pdf
+https://github.com/meta-llama/llama3/blob/main/llama/model.py#L49
+https://arxiv.org/pdf/2104.09864
+
+
+AdamW Optimizer with weight decay:
+https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html
+https://arxiv.org/pdf/1412.6980
+https://arxiv.org/pdf/1711.05101
+https://www.youtube.com/watch?v=NE88eqLngkg
+
+
+RMS Normalization:
+https://arxiv.org/pdf/1910.07467
+

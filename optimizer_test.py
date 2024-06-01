@@ -28,5 +28,9 @@ def test_optimizer(opt_class) -> torch.Tensor:
 
 ref = torch.tensor(np.load("optimizer_test.npy"))
 actual = test_optimizer(AdamW)
+
+print("actual", actual, actual.shape)
+print("ref", ref, ref.shape)
+
 assert torch.allclose(ref, actual)
 print("Optimizer test passed!")
