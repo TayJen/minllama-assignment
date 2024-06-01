@@ -15,3 +15,7 @@ https://www.youtube.com/watch?v=NE88eqLngkg
 RMS Normalization:
 https://arxiv.org/pdf/1910.07467
 
+
+Attention:
+https://colab.research.google.com/github/harvardnlp/annotated-transformer/blob/master/AnnotatedTransformer.ipynb#scrollTo=6c92d7c5
+
