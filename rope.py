@@ -84,14 +84,13 @@ def apply_rotary_emb(
     cos = torch.cos(idx_theta)[:seqlen]
 
     # Then, combine these trigonometric values with the tensors query_real, query_imag,
-
     query_out = torch.zeros_like(query)
     query_out[..., 0::2] = query_real * cos - query_imag * sin
-    query_out[..., 1::2] = query_imag * cos + query_imag * sin
+    query_out[..., 1::2] = query_real * sin + query_imag * cos
 
     key_out = torch.zeros_like(key)
     key_out[..., 0::2] = key_real * cos - key_imag * sin
-    key_out[..., 1::2] = key_real * cos + key_imag * sin
+    key_out[..., 1::2] = key_real * sin + key_imag * cos
 
     # print("query_out", query_out.shape, query_out)
 
