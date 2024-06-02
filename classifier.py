@@ -19,7 +19,6 @@ class LlamaZeroShotClassifier(torch.nn.Module):
 		self.tokenizer = tokenizer
 		self.label_name_ids = [tokenizer.encode(label, bos=False, eos=False) for label in label_names]
 
-
 	def forward(self, input_ids):
 		# compute the completion probability of each label string
 		logits, _ = self.llama(input_ids)
@@ -29,6 +28,7 @@ class LlamaZeroShotClassifier(torch.nn.Module):
 			total_log_prob = torch.sum(log_probabilities[:, :, label_token_ids], axis=-1)
 			label_probabilities[:, i] = total_log_prob[:, 0]
 		return label_probabilities
+
 
 class LlamaEmbeddingClassifier(torch.nn.Module):
 	def __init__(self, config):
@@ -44,6 +44,7 @@ class LlamaEmbeddingClassifier(torch.nn.Module):
 
 		self.dropout = torch.nn.Dropout(config.hidden_dropout_prob)
 		self.classifier_head = torch.nn.Linear(self.llama.config.dim, self.num_labels)
+		self.log_softmax = torch.nn.LogSoftmax(dim=-1)
 
 	def forward(self, input_ids):
 		'''
@@ -54,5 +55,8 @@ class LlamaEmbeddingClassifier(torch.nn.Module):
 		   logits (unnormalized probabilities) over all classes.
 		3) Take the log-softmax of the logits and return log-probabilities over all classes.
 		'''
-		# todo
-		raise NotImplementedError
+		hidden_state = self.llama(input_ids)[-1][:, -1]
+		# print(hidden_state.shape)
+		dropout_hidden_state = self.dropout(hidden_state)
+		logits = self.classifier_head(dropout_hidden_state)
+		return self.log_softmax(logits)
